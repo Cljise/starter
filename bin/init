@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Variables
+SRC_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ROOT_DIR="$SRC_DIR/.."
+APP_DIR="$ROOT_DIR/projet"
+
+# pushd $ROOT_DIR > /dev/null
+# git crypt unlock .git-crypt/gpg.key
+# popd > /dev/null
+
+pushd $APP_DIR > /dev/null
+cp .env.example .env
+popd > /dev/null
+
+# Load docker
+pushd $SRC_DIR > /dev/null
+./bin/up
+popd > /dev/null
+
+# Init server dependencies
+pushd $APP_DIR > /dev/null
+./composer install
+./node install
+./node run prod
+./php-artisan key:generate
+./php-artisan migrate
+./php-artisan db:seed
+./php-artisan storage:link
+./php-artisan passport:install
+./php-artisan passport:keys --force
+popd > /dev/null

@@ -1,0 +1,2 @@
+config/production/.env filter=git-crypt diff=git-crypt
+config/staging/.env filter=git-crypt diff=git-crypt

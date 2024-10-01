@@ -1,0 +1,74 @@
+# #!/usr/bin/env bash
+
+COLOR_GREEN='\033[1;32m'
+COLOR_INITIAL='\033[0m'
+
+BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ROOT_DIR="$BIN_DIR/.."
+APP_DIR="$ROOT_DIR/laravel"
+
+DEST_PHP_BIN=
+DEST_PATH=
+DEST_HOST=
+DEST_USER=
+
+# ----------------------------------------
+# Build project dependencies
+# ----------------------------------------
+
+pushd $BIN_DIR > /dev/null
+printf "\n${COLOR_GREEN}>>>>> Building project dependencies...${COLOR_INITIAL}\n\n"
+./composer install --optimize-autoloader --no-dev --no-scripts
+./node install
+./node run prod
+popd > /dev/null
+
+# ----------------------------------------------
+# Sync files to server
+# ----------------------------------------------
+
+pushd $APP_DIR > /dev/null
+printf "\n${COLOR_GREEN}>>>>> Syncing main project files...${COLOR_INITIAL}\n\n"
+
+rsync -avzh --compress --human-readable --checksum --exclude-from='../config/deploy-excludes.txt' . $DEST_USER@$DEST_HOST:$DEST_PATH
+
+rsync -avzh --compress --human-readable --checksum '../config/staging/.env' $DEST_USER@$DEST_HOST:"$DEST_PATH"
+rsync -avzh --compress --human-readable --checksum '../config/staging/.htaccess' $DEST_USER@$DEST_HOST:"$DEST_PATH/public"
+
+printf "\n${COLOR_GREEN}> Deployment complete <${COLOR_INITIAL}\n"
+popd > /dev/null
+
+# ----------------------------------------------
+# Process first install actions if needed
+# ----------------------------------------------
+
+if [[ "$*" == *"--first-install"* ]]; then
+printf "\n${COLOR_GREEN}>>>>> Performing actions for the first install...${COLOR_INITIAL}\n\n"
+    ssh "$DEST_USER@$DEST_HOST" << HERE
+        pushd "$DEST_PATH" > /dev/null
+            mkdir -p storage/framework/cache/data
+
+            "$DEST_PHP_BIN" artisan storage:link
+            "$DEST_PHP_BIN" artisan passport:install
+            "$DEST_PHP_BIN" artisan passport:keys --force
+        popd > /dev/null
+    exit
+HERE
+fi
+
+# ----------------------------------------------
+# Clear cache
+# ----------------------------------------------
+
+ssh "$DEST_USER@$DEST_HOST" << HERE
+    pushd $DEST_PATH > /dev/null
+
+        # Clear cache
+        $DEST_PHP_BIN artisan config:cache
+        $DEST_PHP_BIN artisan cache:clear
+        $DEST_PHP_BIN artisan route:clear
+        $DEST_PHP_BIN artisan view:clear
+        
+    popd > /dev/null
+    exit
+HERE

@@ -1,0 +1,13 @@
+tests
+.DS_Store
+.editorconfig
+.htaccess
+.env
+google-services.json
+.env.example
+.gitattributes
+.gitignore
+CHANGELOG.md
+container
+cache/*
+phpunit.xml

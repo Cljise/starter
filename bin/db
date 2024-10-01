@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker exec -it projet.maria-db bash -c "mysql -u homestead -p"secret" homestead"

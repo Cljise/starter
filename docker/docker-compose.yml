@@ -1,0 +1,75 @@
+version: "3.9"
+
+services:
+  app:
+    container_name: projet.app
+    build:
+      context: "./php"
+      args:
+        uid: 1000
+    ports:
+      - 8000:80 # web ui (localhost:)
+    environment:
+      - APACHE_RUN_USER=#1000
+      - APACHE_RUN_GROUP=#1000
+    volumes:
+      - ../laravel:/var/www/html
+    networks: 
+      backend:
+        aliases:
+          - app # alias for host
+
+  maria-db:
+    container_name: projet.maria-db
+    image: mariadb:11.5.2
+    ports:
+      - 3306:3306 # mysql (localhost:)
+    volumes:
+      - ./data:/var/lib/mysql
+    environment:
+      - MARIADB_ROOT_PASSWORD=securerootpassword
+      - MARIADB_DATABASE=homestead
+      - MARIADB_USER=homestead
+      - MARIADB_PASSWORD=secret
+    networks:
+      backend:
+        aliases:
+          - maria-db # alias for host
+
+  phpmyadmin:
+    container_name: projet.phpmyadmin
+    build: ./phpmyadmin
+    links:
+      - maria-db
+    environment:
+      PMA_HOST: maria-db
+      PMA_PORT: 3306
+      PMA_USER: homestead
+      PMA_PASSWORD: secret
+      UPLOAD_LIMIT: 300M
+    ports:
+      - "8080:80"
+    volumes:
+      - ./phpmyadmin/config.user.inc.php:/etc/phpmyadmin/config.user.inc.php
+    networks:
+      backend:
+        aliases:
+          - phpmyadmin # alias for host
+
+  mailhog: 
+    container_name: projet.mailhog
+    image: mailhog/mailhog:latest 
+    logging:
+      driver: 'none' # disable saving logs
+    restart: always 
+    ports:
+      - 1025:1025 # smtp server (localhost:)
+      - 8025:8025 # web ui (localhost:)
+    networks:
+      backend:
+        aliases:
+          - mailhog # alias for host
+
+networks:
+  backend:
+    name: backend-network
