@@ -1,3 +1,6 @@
 #!/bin/bash
 
 docker exec -it projet.app bash -c "sudo -u devuser /bin/bash"
+#!/bin/bash
+
+docker exec -it projet.app bash -c "sudo -u devuser /bin/bash"

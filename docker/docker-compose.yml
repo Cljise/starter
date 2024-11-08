@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 version: "3.9"
 
+=======
+>>>>>>> 5249cb7 (feat : Init)
 services:
   app:
     container_name: projet.app
@@ -9,11 +12,19 @@ services:
         uid: 1000
     ports:
       - 8000:80 # web ui (localhost:)
+<<<<<<< HEAD
+=======
+      - 5175:5173 # vite (localhost:5173)
+>>>>>>> 5249cb7 (feat : Init)
     environment:
       - APACHE_RUN_USER=#1000
       - APACHE_RUN_GROUP=#1000
     volumes:
+<<<<<<< HEAD
       - ../laravel:/var/www/html
+=======
+      - ../projet:/var/www/html
+>>>>>>> 5249cb7 (feat : Init)
     networks: 
       backend:
         aliases:
@@ -23,6 +34,7 @@ services:
     container_name: projet.maria-db
     image: mariadb:11.5.2
     ports:
+<<<<<<< HEAD
       - 3306:3306 # mysql (localhost:)
     volumes:
       - ./data:/var/lib/mysql
@@ -31,6 +43,31 @@ services:
       - MARIADB_DATABASE=homestead
       - MARIADB_USER=homestead
       - MARIADB_PASSWORD=secret
+=======
+      - "3306:3306" # mysql (localhost:)
+    volumes:
+      - ./mariadb_data:/var/lib/mysql
+      - ./mariadb_init:/docker-entrypoint-initdb.d
+    environment:
+      MARIADB_ROOT_PASSWORD: securerootpassword
+      MARIADB_DATABASE: homestead
+      MARIADB_USER: homestead
+      MARIADB_PASSWORD: secret
+      MARIADB_AUTO_UPGRADE: "1"
+      MARIADB_INITDB_SKIP_TZINFO: "1"
+    command: 
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --innodb-buffer-pool-size=256M
+      - --max-connections=1000
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MARIADB_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+>>>>>>> 5249cb7 (feat : Init)
     networks:
       backend:
         aliases:

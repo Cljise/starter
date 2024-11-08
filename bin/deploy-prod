@@ -19,8 +19,6 @@ DEST_USER=
 pushd $BIN_DIR > /dev/null
 printf "\n${COLOR_GREEN}>>>>> Building project dependencies...${COLOR_INITIAL}\n\n"
 ./composer install --optimize-autoloader --no-dev --no-scripts
-./node install
-./node run prod
 popd > /dev/null
 
 # ----------------------------------------------
@@ -32,8 +30,8 @@ printf "\n${COLOR_GREEN}>>>>> Syncing main project files...${COLOR_INITIAL}\n\n"
 
 rsync -avzh --compress --human-readable --checksum --exclude-from='../config/deploy-excludes.txt' . $DEST_USER@$DEST_HOST:$DEST_PATH
 
-rsync -avzh --compress --human-readable --checksum '../config/staging/.env' $DEST_USER@$DEST_HOST:"$DEST_PATH"
-rsync -avzh --compress --human-readable --checksum '../config/staging/.htaccess' $DEST_USER@$DEST_HOST:"$DEST_PATH/public"
+rsync -avzh --compress --human-readable --checksum '../config/production/.env' $DEST_USER@$DEST_HOST:"$DEST_PATH"
+rsync -avzh --compress --human-readable --checksum '../config/production/.htaccess' $DEST_USER@$DEST_HOST:"$DEST_PATH/public"
 
 printf "\n${COLOR_GREEN}> Deployment complete <${COLOR_INITIAL}\n"
 popd > /dev/null

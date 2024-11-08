@@ -1,6 +1,14 @@
 #!/bin/bash
 
 args="$@"
-command="php artisan $args"
-echo "$command"
-docker exec -it projet.app bash -c sudo -u devuser /bin/bash -c "\"$command\""
+if [ "$args" != "-0" ]; then
+    command="php artisan $args"
+    echo "$command"
+    docker exec -it projet.app bash -c "sudo -u devuser /bin/bash -c \"$command\""
+    exit 0
+else
+    command="php artisan cache:clear && php artisan config:clear && php artisan view:clear && php artisan filament:upgrade && php artisan filament:optimize && composer dump-autoload && npm run build"
+    echo "$command"
+    docker exec -it projet.app bash -c "sudo -u devuser /bin/bash -c \"$command\""
+    exit 0
+fi

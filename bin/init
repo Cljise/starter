@@ -5,6 +5,7 @@ SRC_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT_DIR="$SRC_DIR/.."
 APP_DIR="$ROOT_DIR/projet"
 
+<<<<<<< HEAD
 # pushd $ROOT_DIR > /dev/null
 # git crypt unlock .git-crypt/gpg.key
 # popd > /dev/null
@@ -16,10 +17,24 @@ popd > /dev/null
 # Load docker
 pushd $SRC_DIR > /dev/null
 ./bin/up
+=======
+# # pushd $ROOT_DIR > /dev/null
+# # git crypt unlock .git-crypt/gpg.key
+# # popd > /dev/null
+
+# pushd $APP_DIR > /dev/null
+# cp .env.example .env
+# popd > /dev/null
+
+# Load docker
+pushd $SRC_DIR > /dev/null
+./up
+>>>>>>> 5249cb7 (feat : Init)
 popd > /dev/null
 
 # Init server dependencies
 pushd $APP_DIR > /dev/null
+<<<<<<< HEAD
 ./composer install
 ./node install
 ./node run prod
@@ -29,4 +44,15 @@ pushd $APP_DIR > /dev/null
 ./php-artisan storage:link
 ./php-artisan passport:install
 ./php-artisan passport:keys --force
+=======
+docker exec -it projet.app sudo -u devuser bash -c "composer install"
+docker exec -it projet.app sudo -u devuser bash -c npm install
+docker exec -it projet.app sudo -u devuser bash -c "php artisan key:generate"
+docker exec -it projet.app sudo -u devuser bash -c "php artisan migrate"
+# docker exec -it projet.app sudo -u devuser bash -c "php artisan make:filament-user"
+# ./php-artisan db:seed
+# ./php-artisan storage:link # Image will be accessible from http://localhost:8000/rounds/fake.jpg
+# ./php-artisan passport:install
+# ./php-artisan passport:keys --force
+>>>>>>> 5249cb7 (feat : Init)
 popd > /dev/null

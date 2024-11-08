@@ -227,3 +227,8 @@ fabric.properties
 .idea/sonarlint  
 
 vendor
+
+project
+docker/data
+docker/mariadb_data
+docker/mariadb_init

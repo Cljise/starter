@@ -1,0 +1,176 @@
+#!/bin/bash
+
+CONFIG_FILE="$(dirname "$0")/config/.test_config"
+
+save_config() {
+    echo "$1" > "$CONFIG_FILE"
+}
+
+load_config() {
+    if [ -f "$CONFIG_FILE" ]; then
+        cat "$CONFIG_FILE"
+    else
+        echo ""
+    fi
+}
+
+run_tests() {
+    local test_type=$(load_config)
+    if [ -z "$test_type" ]; then
+        echo "No test framework configured. Please run the script without options first."
+        exit 1
+    fi
+
+    case "$test_type" in
+        "pest")
+            docker exec -it projet.app ./vendor/bin/pest "$@"
+            ;;
+        "phpunit")
+            docker exec -it projet.app ./vendor/bin/phpunit "$@"
+            ;;
+        *)
+            echo "Unknown test type: $test_type"
+            exit 1
+            ;;
+    esac
+}
+
+display_choices() {
+    echo "Select the type of test:"
+    echo "1) Pest"
+    echo "2) PHPUnit"
+}
+
+get_user_choice() {
+    local choice
+    read -p "Enter your choice (1-2): " choice
+    echo "$choice"
+}
+
+interpret_choice() {
+    local choice="$1"
+    case $choice in
+        1) echo "pest" ;;
+        2) echo "phpunit" ;;
+        *) echo "invalid" ;;
+    esac
+}
+
+check_composer_json() {
+    local test_type="$1"
+    # Define the project path
+    project_path="$(dirname "$(dirname "$0")")/projet"
+    # Check if the project directory exists
+    if [ ! -d "$project_path" ]; then
+        echo "Error: Project directory not found at $project_path"
+        exit 1
+    fi
+    
+    # Set the composer file path
+    composer_file="$project_path/composer.json"
+    
+    # Check if composer.json exists in the project directory
+    if [ ! -f "$composer_file" ]; then
+        echo "Error: composer.json not found in the project directory."
+        exit 1
+    fi
+
+    case "$test_type" in
+        "pest")
+            if grep -q '"pestphp/pest"' "$composer_file"; then
+                echo "Pest is already installed in your project."
+            else
+                echo "Pest is not installed in your project."
+                echo "Do you want to install Pest and remove PHPUnit? (y/n)"
+                read -r install_pest
+                if [[ $install_pest =~ ^[Yy]$ ]]; then
+                    if grep -q '"phpunit/phpunit"' "$composer_file"; then
+                        echo "PHPUnit is currently installed. Removing PHPUnit..."
+                        docker exec -it projet.app composer remove phpunit/phpunit --dev
+                        echo "PHPUnit has been removed."
+                    fi
+                    echo "Installing Pest..."
+                    docker exec -it projet.app composer require pestphp/pest --dev --with-all-dependencies
+                    echo "Initializing Pest..."
+                    docker exec -it projet.app bash -c "./vendor/bin/pest --init"
+                    echo "Pest has been initialized."
+                else
+                    echo "Pest installation cancelled."
+                    exit 0
+                fi
+            fi
+            save_config "pest"
+            ;;
+        "phpunit")
+            if grep -q '"phpunit/phpunit"' "$composer_file"; then
+                echo "PHPUnit is already installed in your project."
+            else
+                echo "PHPUnit is not installed in your project."
+                echo "Do you want to install PHPUnit and remove Pest? (y/n)"
+                read -r install_phpunit
+                if [[ $install_phpunit =~ ^[Yy]$ ]]; then
+                    if grep -q '"pestphp/pest"' "$composer_file"; then
+                        echo "Pest is currently installed. Removing Pest..."
+                        docker exec -it projet.app composer remove pestphp/pest --dev
+                        echo "Pest has been removed."
+                    fi
+                    echo "Installing PHPUnit..."
+                    docker exec -it projet.app composer require phpunit/phpunit --dev --with-all-dependencies
+                else
+                    echo "PHPUnit installation cancelled."
+                    exit 0
+                fi
+            fi
+            save_config "phpunit"
+            ;;
+        *)
+            echo "Error: Unknown test type '$test_type'."
+            exit 1
+            ;;
+    esac
+}
+
+show_help() {
+    echo "Usage: bin/$(basename "$0") [OPTION]"
+    echo
+    echo "Options:"
+    echo "  run [TEST_ARGS]    Run tests with optional arguments"
+    echo "  --help             Display this help message"
+    echo
+    echo "Without options, the script will prompt you to choose and set up a test framework."
+    echo
+    echo "Examples:"
+    echo "  bin/$(basename "$0")              # Choose and set up a test framework"
+    echo "  bin/$(basename "$0") run          # Run all tests"
+    echo "  bin/$(basename "$0") run --filter=TestName  # Run specific tests"
+}
+
+# Main script logic
+if [ "$1" = "--help" ]; then
+    show_help
+elif [ "$1" = "-h" ]; then
+    show_help
+elif [ "$1" = "run" ]; then
+    shift
+    run_tests "$@"
+else
+    # Display the choices
+    display_choices
+
+    # Get user's choice
+    user_choice=$(get_user_choice)
+
+    # Interpret the choice
+    test_type=$(interpret_choice "$user_choice")
+
+    # Show the result
+    if [ "$test_type" = "invalid" ]; then
+        echo "Error: Invalid choice. Please run the script again and select 1 or 2."
+        exit 1
+    else
+        echo "You have chosen the test type: $test_type"
+        
+        # Check if the chosen test framework is installed
+        check_composer_json "$test_type"
+    fi
+fi

@@ -3,4 +3,8 @@
 args="$@"
 command="npm $args"
 echo "$command"
+<<<<<<< HEAD
 docker exec -it projet.app bash -c $command
+=======
+docker exec -it projet.app bash -c "sudo -u devuser /bin/bash -c \"$command\""
+>>>>>>> 5249cb7 (feat : Init)
